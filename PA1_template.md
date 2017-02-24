@@ -1,9 +1,4 @@
----
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
----
+# Reproducible Research: Peer Assessment 1
 
 ## by JP Kuijper
 
@@ -32,8 +27,8 @@ The dataset is stored in a comma-separated-value (CSV) file and there are a tota
 First we load dplyr from the library for the later processing, download the zip-
 file, unzip and load the csv file. 
 
-```{r loading, results="hide", message = FALSE}
 
+```r
 library(dplyr)
 
 temp <- tempfile()
@@ -51,7 +46,8 @@ While ignoring the missing data, for now, we calculate the total number of steps
 per day, make a histogram of this, and lastly report the mean and median of the
 total steps per day. 
 
-```{r creating dataset with total steps per day}
+
+```r
 ActivityDate <- Activity %>% group_by(date) %>% summarise_each(funs("sum"), 
                 vars = steps)
 ```
@@ -59,15 +55,30 @@ ActivityDate <- Activity %>% group_by(date) %>% summarise_each(funs("sum"),
 Now that we have created a new datasets with the total number of steps per day,
 we can create a histogram to get a better picture of the daily activity frequency.
 
-```{r histogram of total steps per day}
+
+```r
 hist(x = ActivityDate$vars, breaks = 20, main = "Histogram of steps per day",
      xlab = "steps per day")
 ```
 
+![](PA1_template_files/figure-html/histogram of total steps per day-1.png)<!-- -->
+
 For more clarity, we will calculate the mean and median. 
-```{r mean and median}
+
+```r
 mean(ActivityDate$vars, na.rm = TRUE) 
+```
+
+```
+## [1] 10766.19
+```
+
+```r
 median(ActivityDate$vars, na.rm = TRUE)
+```
+
+```
+## [1] 10765
 ```
 
 ### What is the average daily activity pattern?
@@ -75,8 +86,8 @@ median(ActivityDate$vars, na.rm = TRUE)
 We explore the daily activity pattern, on average, by creating a time plot, and 
 then by calculating which 5 minute interval contains the maximum number of steps.
 
-```{r creating dataset for average number of steps per interval of 5 minutes}
 
+```r
 ActivityTime <- Activity[complete.cases(Activity$steps),]
 ActivityTime <- ActivityTime %>% group_by(interval) %>% summarise_each(funs("mean"),
                 vars = steps)
@@ -85,17 +96,28 @@ ActivityTime <- ActivityTime %>% group_by(interval) %>% summarise_each(funs("mea
 Now we will create the time series plot which will show when the highest average
 number of steps takes place.
 
-```{r time series plot}
+
+```r
 plot(x = ActivityTime$interval, y = ActivityTime$vars, type = "l", 
      main = "Time plot of average number of steps per 5 minute interval", xlab = 
          "Time (24 hour period per 5 minutes)", ylab = "Average number of steps")
 ```
 
+![](PA1_template_files/figure-html/time series plot-1.png)<!-- -->
+
 Because we cannot, with certainty, say when the highest number of steps occurs.
 We now calculate this number and its matching interval. 
 
-```{r maximum number of steps}
+
+```r
 filter(ActivityTime, vars == max(vars))
+```
+
+```
+## # A tibble: 1 × 2
+##   interval     vars
+##      <int>    <dbl>
+## 1      835 206.1698
 ```
 
 ### Imputing missing values
@@ -104,8 +126,13 @@ We will explore the number of missing values, impute the missing values, and the
 explore the total number of steps per day as before, comparing the answers with 
 and without the imputing by recreating the histogram, mean and median. 
 
-```{r showing missing values}
+
+```r
 sum(is.na(Activity$steps))
+```
+
+```
+## [1] 2304
 ```
 
 As can be seen there is a fair amount of missing values, and therefore imputing is necessary. 
@@ -116,7 +143,8 @@ at 3.00 am, it is fairly certain that no activity has been measured, while at
 4.00 pm we expect more activity. The mean of the 5 minute intervals have already
 been calculated and used in the last analysis.
 
-```{r imputing missing values}
+
+```r
 Activity1 <- Activity
 Activity1 <- merge(Activity1, ActivityTime, by = "interval")
 Activity1 <- arrange(Activity1, date)
@@ -128,16 +156,31 @@ Activity1$steps2 <- ifelse(is.na(Activity1$steps), Activity1$steps2 <- Activity1
 Now we will explore the differences between the imputed dataset with the non-
 imputed by recreating the histogram, mean and median.
 
-```{r recreating histogram, mean and median}
 
+```r
 ActivityDate1 <- Activity1 %>% group_by(date) %>% summarise_each(funs("sum"), 
                                                                vars = steps2)
 
 hist(x = ActivityDate1$vars, breaks = 20, main = "Histogram of steps per day
      Imputed", xlab = "steps per day")
+```
 
+![](PA1_template_files/figure-html/recreating histogram, mean and median-1.png)<!-- -->
+
+```r
 mean(ActivityDate1$vars)
+```
+
+```
+## [1] 10766.19
+```
+
+```r
 median(ActivityDate1$vars)
+```
+
+```
+## [1] 10766.19
 ```
 As can be seen, the median shows a small difference with before and the
 histogram peak is higher. 
@@ -151,7 +194,8 @@ time we will look at the difference between during the week and the weekend.
 
 First we will create a new factor variable, WeekEnd. The dataset with the imputed
 missing values will be used.
-```{r create factor variable}
+
+```r
 Activity1Week <- mutate(Activity1, weekdays = weekdays(as.POSIXct(date)))
 Weekdays <- c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday")
 
@@ -161,7 +205,8 @@ Activity1Week$WeekEnd <- factor((weekdays(as.POSIXct(Activity1$date)) %in% Weekd
 Now we will create a new time series plot by looking at the 5 minute intervals
 of the average number of steps, separated by weekdays and weekends.
 
-```{r creating time series for weekdays and weekends}
+
+```r
 Activity1Week1 <- Activity1Week %>% group_by(interval, WeekEnd) %>% summarise_each(funs(
     "mean"), vars = steps2)
 
@@ -177,3 +222,5 @@ with(subset(Activity1Week1, WeekEnd == "Weekend"), points(interval, vars,
 legend("topright", pch = 18, col = c("blue", "red"), 
        legend = c("Weekdays", "Weekend"))
 ```
+
+![](PA1_template_files/figure-html/creating time series for weekdays and weekends-1.png)<!-- -->
